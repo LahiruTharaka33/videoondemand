@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PIT PASS+ App</title>
+<meta name="theme-color" content="#0F181A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: mobile-only app shell (#app) with fixed header + tab bar over one scroller;
+   wider screens get the same phone-width column, centred. */
+:root{
+  --bg:#0F181A; --bg2:#162426; --bg3:#1F2C2E; --line:#2A393C; --stage:#091013;
+  --text:#FFFEFE; --muted:#899397; --dim:#5d686c;
+  --accent:#F2E92A; --accent-ink:#0F181A; --live:#FF3B3B; --ok:#46d369;
+  --font:'Sora',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --hdr:96px; --tab:62px; --sbar:0px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--stage);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased}
+body{overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hide{display:none!important}
+.icon{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.fill{fill:currentColor;stroke:none}
+
+/* ---------- App shell ---------- */
+#stage{height:100%;display:flex;justify-content:center}
+#app{position:relative;width:100%;max-width:430px;height:100%;overflow:hidden;background:var(--bg);isolation:isolate}
+#scroller{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding-bottom:calc(var(--tab) + 24px);overscroll-behavior:contain}
+#scroller::-webkit-scrollbar{display:none}
+
+/* ---------- Splash ---------- */
+.layer{position:absolute;inset:0}
+#splash{z-index:90;background:var(--bg);display:grid;place-items:center;transition:opacity .5s}
+#splash img{width:62%;max-width:240px;animation:pulse 1.4s ease-in-out infinite}
+#splash .bar{position:absolute;bottom:20%;left:50%;width:120px;height:3px;background:var(--line);transform:translateX(-50%);border-radius:3px;overflow:hidden}
+#splash .bar::after{content:"";position:absolute;inset:0;background:var(--accent);animation:load 1.3s ease forwards;transform-origin:left}
+#splash .proto{position:absolute;bottom:calc(14% - 20px);left:16px;right:16px;text-align:center;font-size:11px;letter-spacing:.06em;color:var(--muted)}
+.foot-note{padding:8px 16px 4px;text-align:center;font-size:11px;line-height:1.5;color:var(--dim)}
+@keyframes load{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes pulse{50%{opacity:.6;transform:scale(.97)}}
+
+/* ---------- Header ---------- */
+#hdr{position:absolute;z-index:40;top:0;left:0;right:0;padding:calc(var(--sbar) + 10px) 16px 10px;transition:background .25s}
+#hdr.solid{background:rgba(15,24,26,.97);backdrop-filter:blur(10px)}
+#hdr .top{display:flex;align-items:center;gap:6px}
+#hdr .logo{height:22px;width:auto;margin-right:auto}
+#hdr .top button{width:38px;height:38px;display:grid;place-items:center}
+.me{width:28px!important;height:28px!important;border-radius:5px;font-weight:800;font-size:14px;color:var(--accent-ink);margin-left:6px}
+.chips{display:flex;gap:8px;margin-top:10px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:inline-flex;align-items:center;gap:4px;border:1px solid rgba(255,255,255,.45);padding:6px 13px;border-radius:999px;font-size:13px;white-space:nowrap}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:600}
+.chip.x{padding:6px 8px}
+.chip .icon{width:16px;height:16px}
+
+/* ---------- Hero card ---------- */
+.hero{position:relative;margin:calc(var(--sbar) + var(--hdr) + 4px) 16px 26px;border-radius:12px;overflow:hidden;aspect-ratio:4/5;max-height:520px;width:auto;background:var(--bg3);box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.hero .bg{position:absolute;inset:0;background-size:cover;background-position:center;animation:kb 16s ease-in-out infinite alternate}
+@keyframes kb{from{transform:scale(1.02)}to{transform:scale(1.14)}}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(15,24,26,.98) 4%,rgba(15,24,26,.55) 38%,transparent 65%)}
+.hero .in{position:absolute;z-index:2;left:16px;right:16px;bottom:16px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.mark{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:.22em;color:var(--accent)}
+.mark i{width:16px;height:16px;border-radius:3px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:10px;font-style:normal;letter-spacing:0;font-weight:800}
+.hero h2{font-size:28px;line-height:1.02;font-weight:800;text-transform:uppercase;text-wrap:balance;text-shadow:0 2px 16px rgba(0,0,0,.6)}
+.tags{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;font-size:12px;color:#d6dadb}
+.tags span+span::before{content:"•";margin-right:6px;color:var(--accent)}
+.hbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-top:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:6px;font-weight:700;font-size:15px;transition:transform .12s,opacity .12s}
+.btn:active{transform:scale(.97)}
+.btn .icon{width:20px;height:20px}
+.btn.play{background:var(--accent);color:var(--accent-ink)}
+.btn.grey{background:rgba(137,147,151,.32);color:var(--text)}
+.btn.block{width:100%}
+.dots{position:absolute;z-index:3;top:12px;left:0;right:0;display:flex;justify-content:center;gap:5px}
+.dots i{width:18px;height:3px;border-radius:2px;background:rgba(255,255,255,.35)}
+.dots i.on{background:var(--accent)}
+
+/* ---------- Rows ---------- */
+.row{margin-bottom:24px}
+.row h3{padding:0 16px;font-size:16px;font-weight:700;margin-bottom:9px;display:flex;justify-content:space-between;align-items:baseline}
+.row h3 button{font-size:12px;font-weight:400;color:var(--muted)}
+.track{display:flex;gap:8px;overflow-x:auto;padding:0 16px;scroll-snap-type:x proximity;scroll-padding:0 16px;scrollbar-width:none}
+.track::-webkit-scrollbar{display:none}
+.track>*{scroll-snap-align:start}
+
+.pc{position:relative;flex:none;width:108px;aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:var(--bg3)}
+.pc img{width:100%;height:100%;object-fit:cover}
+.pc::after{content:"";position:absolute;inset:45% 0 0;background:linear-gradient(transparent,rgba(0,0,0,.92))}
+.pc .pt{position:absolute;z-index:2;left:7px;right:7px;bottom:8px;font-size:11px;font-weight:800;line-height:1.15;text-transform:uppercase;text-wrap:balance}
+.pc .pm{position:absolute;z-index:2;top:6px;left:6px;width:16px;height:16px;border-radius:3px;background:var(--accent);color:var(--accent-ink);font-size:10px;font-weight:800;display:grid;place-items:center}
+.pc .pn{position:absolute;z-index:2;top:0;right:0;background:var(--live);font-size:8px;font-weight:800;letter-spacing:.08em;padding:3px 6px;border-bottom-left-radius:5px}
+.pc .pn.y{background:var(--accent);color:var(--accent-ink)}
+.pc:active{transform:scale(.97)}
+
+.top10{flex:none;display:flex;align-items:flex-end;width:152px}
+.top10 b{font-size:104px;font-weight:800;line-height:.78;letter-spacing:-.1em;color:var(--bg);-webkit-text-stroke:2.5px var(--muted);margin-right:-12px;z-index:1}
+.top10 .pc{width:96px;z-index:2}
+
+.wc{flex:none;width:224px}
+.wc .th{position:relative;aspect-ratio:16/9;border-radius:6px;overflow:hidden;background:var(--bg3)}
+.wc .th img{width:100%;height:100%;object-fit:cover}
+.wc .dur{position:absolute;right:6px;bottom:6px;font-size:10px;background:rgba(0,0,0,.78);padding:2px 5px;border-radius:3px;font-variant-numeric:tabular-nums}
+.wc .bd{position:absolute;left:6px;top:6px;font-size:8px;font-weight:800;letter-spacing:.1em;padding:3px 6px;border-radius:3px;background:var(--live)}
+.wc .cap{padding:7px 2px 0;font-size:12px;line-height:1.35}
+.wc .cap b{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wc .cap span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.wc .playc{position:absolute;inset:0;display:grid;place-items:center}
+.wc .playc i{width:38px;height:38px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.4);display:grid;place-items:center}
+.wc .playc svg{width:16px;height:16px;margin-left:2px}
+
+.cw{flex:none;width:132px;border-radius:6px;overflow:hidden;background:var(--bg2)}
+.cw .th{position:relative;aspect-ratio:3/4}
+.cw .th img{width:100%;height:100%;object-fit:cover}
+.cw .playc{position:absolute;inset:0;display:grid;place-items:center}
+.cw .playc i{width:42px;height:42px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.45);display:grid;place-items:center}
+.cw .playc svg{width:16px;height:16px;margin-left:2px}
+.cw .ep{position:absolute;left:0;right:0;bottom:0;padding:16px 8px 6px;font-size:10px;background:linear-gradient(transparent,rgba(0,0,0,.85));color:#d6dadb}
+.prog{height:3px;background:rgba(255,255,255,.25)}
+.prog i{display:block;height:100%;background:var(--accent)}
+.cw .ft{display:flex;justify-content:space-between;padding:8px 10px;color:var(--muted)}
+.cw .ft .icon{width:18px;height:18px}
+
+/* Live band */
+.liveband{position:relative;margin:0 16px 26px;border-radius:12px;overflow:hidden;background:var(--bg2);border:1px solid var(--line)}
+.liveband .bg{height:120px;background-size:cover;background-position:center}
+.liveband .in{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px}
+.livedot{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:800;letter-spacing:.18em;color:var(--live)}
+.livedot::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--live);animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.liveband h4{font-size:18px;font-weight:800;line-height:1.2;text-wrap:balance}
+.liveband p{font-size:13px;color:#c2c9cb;line-height:1.5}
+.count{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.count div{background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:6px 0;text-align:center}
+.count b{display:block;font-size:19px;color:var(--accent);font-variant-numeric:tabular-nums}
+.count span{font-size:9px;color:var(--muted);letter-spacing:.1em}
+.liveband .hbtns{margin-top:4px}
+
+/* ---------- Sub pages ---------- */
+.page{padding-top:calc(var(--sbar) + var(--hdr) + 8px)}
+.page.bare{padding-top:calc(var(--sbar) + 64px)}
+.ph{padding:0 16px 16px}
+.ph h2{font-size:24px;font-weight:800}
+.ph p{color:var(--muted);font-size:13px;line-height:1.5;margin-top:4px}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px}
+.pgrid .pc{width:auto}
+.list{display:flex;flex-direction:column}
+.li{display:grid;grid-template-columns:128px 1fr 32px;gap:12px;align-items:center;padding:6px 16px}
+.li .th{position:relative;aspect-ratio:16/9;border-radius:4px;overflow:hidden;background:var(--bg3)}
+.li .th img{width:100%;height:100%;object-fit:cover}
+.li .th .dur{position:absolute;right:4px;bottom:4px;font-size:9px;background:rgba(0,0,0,.78);padding:1px 4px;border-radius:3px}
+.li b{font-size:13px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.li small{display:block;font-size:11px;color:var(--muted);margin-top:3px}
+.li .pl{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--text);display:grid;place-items:center}
+.li .pl svg{width:12px;height:12px;margin-left:2px}
+.empty{padding:40px 24px;color:var(--muted);text-align:center;font-size:14px;line-height:1.6}
+
+/* Search */
+.sfield{position:absolute;z-index:41;top:0;left:0;right:0;padding:calc(var(--sbar) + 10px) 16px 10px;background:var(--bg);display:flex;align-items:center;gap:10px}
+.sfield label{flex:1;display:flex;align-items:center;gap:10px;background:var(--bg3);border-radius:6px;padding:9px 12px;color:var(--muted)}
+.sfield input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:15px}
+.sfield .icon{width:20px;height:20px}
+
+/* My Pass */
+.mp-head{display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 16px 20px}
+.mp-head .av{width:72px;height:72px;border-radius:10px;display:grid;place-items:center;font-size:34px;font-weight:800;color:var(--accent-ink)}
+.mp-head b{font-size:20px}
+.mp-head button{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.tile{margin:0 16px 12px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);padding:14px;display:flex;gap:12px;align-items:center}
+.tile .ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--bg3);color:var(--accent);flex:none}
+.tile div{flex:1;min-width:0;font-size:13px;line-height:1.45}
+.tile div b{display:block;font-size:14px}
+.tile div span{color:var(--muted)}
+.tile.up{background:linear-gradient(120deg,#2b2a0c,var(--bg2) 60%);border-color:rgba(242,233,42,.35)}
+.sec-title{padding:10px 16px 10px;font-size:16px;font-weight:700}
+.plans{display:flex;flex-direction:column;gap:12px;padding:0 16px}
+.plan{border:1px solid var(--line);border-radius:12px;padding:18px 16px;background:var(--bg2);display:flex;flex-direction:column;gap:10px;position:relative}
+.plan.best{border-color:var(--accent)}
+.plan .flag{position:absolute;top:-9px;right:14px;background:var(--accent);color:var(--accent-ink);font-size:9px;font-weight:800;letter-spacing:.14em;padding:3px 8px;border-radius:999px}
+.plan .hd{display:flex;justify-content:space-between;align-items:baseline}
+.plan h4{font-size:17px}
+.plan .price{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.plan .price small{font-size:11px;color:var(--muted);font-weight:400}
+.plan ul{list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13px;color:#cfd5d7}
+.plan li::before{content:"✓";color:var(--accent);font-weight:800;margin-right:8px}
+.note{padding:14px 16px 0;color:var(--dim);font-size:11px;line-height:1.5}
+
+/* ---------- Detail sheet ---------- */
+#detail{z-index:60;background:var(--bg);overflow-y:auto;scrollbar-width:none;animation:up .28s cubic-bezier(.2,.8,.2,1);padding-bottom:40px}
+#detail::-webkit-scrollbar{display:none}
+@keyframes up{from{transform:translateY(100%)}}
+.media{position:sticky;top:0;z-index:5;margin-top:var(--sbar);aspect-ratio:16/9;background:#000 center/cover no-repeat}
+.media iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.media .big{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.25)}
+.media .big i{width:56px;height:56px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.45);display:grid;place-items:center}
+.media .big svg{width:22px;height:22px;margin-left:3px}
+.media .xb{position:absolute;z-index:3;top:8px;right:8px;width:32px;height:32px;border-radius:50%;background:rgba(15,24,26,.85);display:grid;place-items:center}
+.media .xb .icon{width:18px;height:18px}
+.dbody{padding:14px 16px 0;display:flex;flex-direction:column;gap:10px}
+.dbody h2{font-size:22px;font-weight:800;line-height:1.15;text-wrap:balance}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.meta .match{color:var(--ok);font-weight:700}
+.meta .box{border:1px solid var(--muted);padding:0 5px;border-radius:3px;font-size:10px}
+.meta .top{display:inline-flex;align-items:center;gap:6px;color:var(--text);font-weight:600}
+.meta .top i{font-style:normal;font-size:8px;font-weight:800;background:var(--accent);color:var(--accent-ink);border-radius:2px;padding:2px 3px;line-height:1}
+.dbody p{font-size:13px;line-height:1.55;color:#dde1e2}
+.dbody .cred{font-size:12px;color:var(--muted);line-height:1.6}
+.dbody .cred b{color:#cfd5d7;font-weight:400}
+.acts{display:flex;gap:28px;padding:6px 8px 4px}
+.acts button{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.acts button .icon{color:var(--text)}
+.acts button.on .icon{color:var(--accent)}
+.dtabs{display:flex;gap:22px;margin:10px 16px 6px;border-top:1px solid var(--line)}
+.dtabs button{padding:12px 0 10px;font-size:14px;font-weight:700;color:var(--muted);border-top:4px solid transparent;margin-top:-1px}
+.dtabs button.on{color:var(--text);border-top-color:var(--accent)}
+.eps{display:flex;flex-direction:column;gap:16px;padding:8px 16px 0}
+.epi{display:flex;flex-direction:column;gap:8px}
+.epi .r{display:grid;grid-template-columns:124px 1fr 28px;gap:12px;align-items:center}
+.epi .th{position:relative;aspect-ratio:16/9;border-radius:4px;overflow:hidden;background:var(--bg3)}
+.epi .th img{width:100%;height:100%;object-fit:cover}
+.epi .th .pl{position:absolute;inset:0;display:grid;place-items:center}
+.epi .th .pl i{width:28px;height:28px;border-radius:50%;border:1.5px solid #fff;background:rgba(0,0,0,.45);display:grid;place-items:center}
+.epi .th .pl svg{width:11px;height:11px;margin-left:2px}
+.epi .th .prog{position:absolute;left:0;right:0;bottom:0}
+.epi b{font-size:13px;font-weight:600;line-height:1.35}
+.epi small{display:block;font-size:11px;color:var(--muted);margin-top:3px}
+.epi.cur b{color:var(--accent)}
+.epi .dl{color:var(--muted)}
+.epi .dl .icon{width:20px;height:20px}
+
+/* ---------- Categories sheet ---------- */
+#cats{z-index:65;background:rgba(9,16,19,.94);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;overflow-y:auto;padding:calc(var(--sbar) + 50px) 16px 120px;gap:22px;animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+#cats button{font-size:17px;color:#bfc5c7}
+#cats button.on{color:var(--text);font-weight:700;font-size:20px}
+#cats .xc{position:absolute;bottom:calc(var(--tab) + 20px);left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:var(--text);color:var(--bg);display:grid;place-items:center}
+
+/* ---------- Reels ---------- */
+#reels{z-index:30;bottom:var(--tab);background:#000;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none}
+#reels::-webkit-scrollbar{display:none}
+.reel{height:100%;scroll-snap-align:start;scroll-snap-stop:always;position:relative;overflow:hidden}
+.reel>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.75)}
+.reel iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+.reel .tap{position:absolute;inset:0;display:grid;place-items:center}
+.reel .tap i{width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center}
+.reel .tap svg{width:26px;height:26px;margin-left:4px}
+.reel .rcap{position:absolute;z-index:2;left:14px;right:72px;bottom:18px;font-size:13px;line-height:1.45;text-shadow:0 1px 6px #000}
+.reel .rcap b{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.reel .rcap b img{width:28px;height:28px;border-radius:50%;background:var(--bg);padding:5px}
+.reel .rcap b span{border:1px solid #fff;border-radius:4px;font-size:10px;padding:1px 6px;font-weight:600}
+.reel .ract{position:absolute;z-index:2;right:10px;bottom:22px;display:flex;flex-direction:column;gap:20px;align-items:center;font-size:11px}
+.reel .ract button{display:flex;flex-direction:column;align-items:center;gap:4px}
+.reel .ract .icon{width:30px;height:30px}
+.reel .ract button.on .icon{color:var(--accent)}
+.reels-top{position:absolute;z-index:31;top:0;left:0;right:0;padding:calc(var(--sbar) + 14px) 16px 14px;font-size:18px;font-weight:700;background:linear-gradient(rgba(0,0,0,.6),transparent);pointer-events:none}
+
+/* ---------- Tab bar ---------- */
+#tabbar{position:absolute;z-index:50;left:0;right:0;bottom:0;height:var(--tab);display:flex;background:rgba(15,24,26,.97);border-top:1px solid var(--line);backdrop-filter:blur(10px)}
+#tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;color:var(--muted)}
+#tabbar button.on{color:var(--text)}
+#tabbar button.on .icon{color:var(--accent)}
+#tabbar .icon{width:22px;height:22px}
+
+/* ---------- Toast ---------- */
+#toast{position:absolute;left:16px;right:16px;bottom:calc(var(--tab) + 18px);z-index:95;background:var(--text);color:var(--bg);font-weight:600;font-size:13px;padding:11px 14px;border-radius:8px;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;text-align:center}
+#toast.on{opacity:1;transform:none}
+
+@media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="app">
+    <div id="scroller"><div id="view"></div></div>
+
+    <header id="hdr">
+      <div class="top">
+        <img class="logo" data-logo data-go="home" alt="PIT PASS">
+        <button data-act="cast" aria-label="Cast to TV"><svg class="icon" viewBox="0 0 24 24"><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6M2 12a8 8 0 0 1 8 8M2 16a4 4 0 0 1 4 4M2 20h.01"/></svg></button>
+        <button data-go="search" aria-label="Search"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
+        <button class="me" id="meBtn" data-go="mypass" aria-label="My Pass"><svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>
+      </div>
+      <div class="chips" id="chips">
+        <button class="chip x" data-go="home" aria-label="Back to Home"><svg class="icon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <button class="chip" data-go="series">Series</button>
+        <button class="chip" data-go="live">Live</button>
+        <button class="chip" data-go="podcasts">PITCAST</button>
+        <button class="chip" data-act="cats">Categories <svg class="icon" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+    </header>
+
+    <nav id="tabbar">
+      <button data-go="home" class="on"><svg class="icon" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg>Home</button>
+      <button data-go="reels"><svg class="icon" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="m10.5 9 4 3-4 3z"/></svg>Reels</button>
+      <button data-go="live"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/></svg>Live</button>
+      <button data-go="mypass"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M8 15h3"/></svg>My Pass</button>
+    </nav>
+
+    <div id="splash" class="layer"><img data-logo alt="PIT PASS"><div class="bar"></div><p class="proto">Prototype · not an official PIT PASS app</p></div>
+    <div id="toast" role="status"></div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   ASSETS
+   Thumbnails load from YouTube; PIT PASS logo and photos ship in site/.
+   ===================================================================== */
+const SITE = 'site/';
+const LOGO = SITE + 'Pit-Pass-Text-Logo_LQ.png';
+const BADGE_LOGO = SITE + 'pp-logo-white.png';
+// size: 'big' (1280px, for posters/hero/player) or 'mq' (320px, for small cards)
+const src = (v, size) => `https://i.ytimg.com/vi/${v}/${size === 'big' ? 'maxresdefault' : 'mqdefault'}.jpg`;
+// YouTube serves a 120px placeholder when maxres doesn't exist; swap to mq then.
+const img = (v, size = 'mq') => `<img loading="lazy" alt="" src="${src(v,size)}"${size==='big' ? ` onload="if(this.naturalWidth<200)this.src='${src(v,'mq')}'"` : ''}>`;
+const bgs = v => `url('${src(v,'big')}'),url('${src(v,'mq')}')`;
+
+/* =====================================================================
+   CONTENT — all videos are real uploads from youtube.com/@pitpasssrilanka
+   ===================================================================== */
+const SHOWS = {
+  avish: { title:'Avish Silva: History at Seven', kind:'Special', cat:'Specials', year:2026, badge:'NEW', tags:['Karting','Inspiring','Documentary'],
+    desc:'At just seven years old, Avish Silva takes Sri Lanka to the world karting stage. The story of a young driver making national motorsport history.',
+    hero: SITE+'5U5A0754-924x616.jpg',
+    eps:[['gTTscnwj99k','7 year old Avish Silva made Sri Lankan motorsport history','3:22']] },
+
+  evo: { title:"Ashan Silva's EVO III Restoration", kind:'Original Series', cat:'Pit Pass Bodyshop', year:2025, badge:'ORIGINAL', tags:['Rally','Restoration','Behind the scenes'],
+    desc:"Inside the bodyshop as one of Sri Lanka's most iconic rally cars, Ashan Silva's Mitsubishi EVO III, is stripped back and rebuilt panel by panel.",
+    eps:[['qjMk36ZKy4o','Part 01: Teardown','12:08'],['n7lcTFLua5w','Part 02','3:39'],['Ipe524I0eIc','Part 03','6:28'],['UDAmETUMqCU','Part 04','6:38'],['jlTVQ9bX8t4','Part 05: The Finish','6:27']] },
+
+  fox: { title:'Road to Fox Hill', kind:'Original Series', cat:'Off Season', year:2024, badge:'ORIGINAL', tags:['Hill climb','Drivers','Legendary'],
+    desc:"Sri Lanka's most legendary circuit, through the eyes of the drivers who conquer it. Laps, stories and preparation on the road to Fox Hill.",
+    eps:[['DAGCAWzciM4','A Lap In','6:24'],['la2-OYeQPwA','with Ashan Silva','3:59'],['DKSfjkmDmr8','with Evon Gurusinghe','9:49'],['yA3Gqb1dmHo','with Cassim Wahab','6:14']] },
+
+  pitcast: { title:'PITCAST', kind:'Podcast', cat:'Paddock Chat', year:2025, badge:'PODCAST', tags:['Podcast','Sinhala','Long form'],
+    desc:'Long-form conversations with the drivers, riders and personalities of Sri Lankan motorsport. The stories you never see on race day.',
+    eps:[['wYHcougOQxY','Journey of Pit Pass, EP 1','1:01:51'],['SBjkXpO-iZ0','Who is Evon Biyagee Gurusinghe?','1:14:39'],['EmYvtImCkJI','Who is Mangala Pathirage Don Raala?','55:26'],['qU3DmT5beCY','Who is Mahesh Kodagoda?','58:51'],['ivgklR1lcyg','Who is Buddhika Ruklantha?','51:46'],['Iiaem76zgns','Who is Devin Serasinghe?','1:04:07'],['ZIv8wZh2pLc','Who is Upulwan Serasinghe?','29:12'],['Ci0_fkg4Qho','Who is Akila de Costa?','29:37'],['A113x1wPnMQ','Who is Thenuka Liyanarachchi?','34:56'],['V07UtJOd96Q','Who is Maduranga Caldera?','1:03:40'],['VYKsikLD1ec','Who is Irfan Fuard?','50:05'],['9f-I_L9RbdA','The true value of our fans','1:05:56']] },
+
+  moments: { title:'Moments', kind:'Original Series', cat:'Moments', year:2025, badge:'ORIGINAL', tags:['Portraits','Legends'],
+    desc:'Intimate portraits of the legends of Sri Lankan motorsport. Presented by Asian Paints Causeway.',
+    eps:[['wW0RxKfG8Wg','Ashan Silva','4:20'],['jOtmdJnz0ZM','Denzil Darling','3:46']] },
+
+  pitcare: { title:'Pit Care', kind:'Series', cat:'Pit Care', year:2025, tags:['How-to','Bikes','Sinhala & Tamil'],
+    desc:'Season 02. Practical bike-care know-how in Sinhala and Tamil: why genuine parts matter, how to spot fakes, and what cheap shortcuts really cost.',
+    eps:[['4dpZ9moC-BA','Selling fake spare parts can cost a 1M fine','33:04'],['kOzac94PGWI','How to identify Honda genuine spare parts','13:29'],['5hyhOZn98oo','Cheap brake pads, ruined brake hub?','5:35'],['-jN_l4alN2Q','Why genuine parts when boring your engine','1:42'],['IXc_n1XEAOs','Save on petrol with a genuine air filter','1:26'],['oUz1AdsfbCk','How a cheap spark plug damages your engine','2:02'],['U6yK3uMFG9g','The real cost of a cheap scooter drive belt','2:42']] },
+
+  katu25: { title:'Katukurunda 2025 Round 02', kind:'Full Races', cat:'Archives', year:2025, badge:'FULL RACES', tags:['Circuit','Cars','Superbikes'],
+    desc:'Every class, every lap from Katukurunda. Full race coverage from cars to superbikes at the Asian Paints Causeway Rotherham Katukurunda 2025.',
+    hero: SITE+'CMSC_PIT-10-924x616.jpg',
+    eps:[['VFjIymbWJT4','Group M Super Sports 900–1000cc 4T','36:31'],['WJeBihYZe0U','Formula 1300cc EFI, Race 1','17:15'],['LidoR_RBzWA','Group SL S Cars up to 3500cc','17:38'],['YlAsngcKals','Group SL E Cars 1300cc, Ford Lazer & Mazda','13:31'],['73cW49HUJoA','Group SL E up to 1000cc, Nissan March','13:20'],['EI9iHqJ7XxA','Group SL N, Ford Lazer & Mazda 1500cc','13:18'],['EZIkBQF57Y8','Group SL H, Subaru Legacy 2000cc','12:36'],['UU6ztPNDcMI','Group SM 500cc 2T & 750cc 4T','11:04'],['cTl5FLDdQII','Group M Sports Touring up to 700cc 4T','11:07'],['jgkQZhTk0y4','Group M Sport Touring 800–1300cc 4T','10:50'],['pdTTev3ywf0','Group O, 100cc to 160cc 4T','9:16'],['SsOKaklzyB8','Group M Super Sports 175–250cc 4T','9:05']] },
+
+  walawa: { title:'Walawa Supercross 2025', kind:'Behind the Scenes', cat:'Pit Pass Raw', year:2025, tags:['Supercross','Interviews'],
+    desc:'Practice day and press conference access at the Asian Paints Causeway Walawa Supercross. Drivers, riders and organisers in their own words.',
+    eps:[['QLJbm06oF5s','Press Conference: Upulwan Serasinghe','7:05'],['fzeYoIOKvVI','Practice Day: Sarindu Gamage, SMSC','7:06'],['0NDhYbPhCN4','Practice Day: Randika & Malinda','4:00'],['g30Sn6jT6A0','Press Conference: Sarindu Gamage','3:30'],['f1Kb3cy_8A0','Practice Day: Sangeeth Suriyage','2:12'],['PIZ7h50M_qQ','Press Conference: Jacques Gunawardena','2:03']] },
+
+  intl: { title:'PIT PASS International', kind:'Interviews', cat:'Specials', year:2025, badge:'EXCLUSIVE', tags:['FIA','Interviews'],
+    desc:'Pit Pass goes global with exclusive conversations with the people shaping motorsport beyond our shores.',
+    eps:[['xjELk9gx8qo','Valerio Iachizzi, FIA Secretary General for Sport','8:02'],['wELvOYEZXZU','"Indian motorsport is growing rapidly": Rasheed Khan','2:27']] },
+
+  powerhouse: { title:'The Ultimate Motorsport Powerhouse', kind:'Special', cat:'Specials', year:2026, badge:'NEW', tags:['Champions','Team'],
+    desc:'Ashan Silva and Jacques Gunawardena. Two champions, one team. The motorsport powerhouse just got bigger.',
+    eps:[['z5ZCoUAT1DY','Ashan Silva & Jacques Gunawardena','2:48']] },
+
+  the49: { title:'The 49 Is Back', kind:'Special', cat:'Specials', year:2026, tags:['Comeback'], desc:'A legend returns to the grid.', eps:[['xV6ZMD8tYdw','The 49 Is Back','6:09']] },
+
+  gunner26: { title:'Gunner Supercross 2026', kind:'Highlights', cat:'Recap', year:2026, badge:'NEW', tags:['Supercross','Highlights'], hero: SITE+'Y5-924x616.jpg', eps:[['qtX57KZGQ5Q','Asian Paints Causeway Gunner Supercross 2026','1:46']], desc:'Dust, jumps and full-throttle action from Gunner Supercross 2026.' },
+  gunner25: { title:'Gunner Supercross 2025', kind:'Highlights', cat:'Recap', year:2025, tags:['Supercross'], eps:[['bdVaSxaeDww','Gunner Supercross 2025 Highlights','1:39'],['Qz2byD2jnSc','Champion Ashan Silva at Gunners 2025','1:57']], desc:'The best of Gunner Supercross 2025.' },
+  katu25r1: { title:'Katukurunda 2025 Round 1', kind:'Highlights', cat:'Recap', year:2025, tags:['Circuit','Comeback'], eps:[['9AHtoyS62H4','Round 1 Highlights','1:54'],['1tNwqdqmEMs','P5 to the Podium: Ashan Silva','2:09'],['Wl6UO9D7v8c','Podium at the track where he flipped in 2019','2:13']], desc:'Highlights and comeback stories from Rotherham Katukurunda Round 1.' },
+  walawaHL: { title:'Walawa Supercross Highlights', kind:'Highlights', cat:'Recap', year:2025, tags:['Supercross'], eps:[['NWIWceLkOYc','Walawa Supercross 2025 Highlights','2:38']], desc:'Highlights from the Asian Paints Causeway Walawa Supercross.' },
+  f1300: { title:'F1300 Driver Training', kind:'Highlights', cat:'Specials', year:2025, tags:['Formula','Training'], eps:[['W6psbp_vSMM','F1300 Driver Training by Mora Racing','4:16']], desc:'Inside the Mora Racing F1300 driver training program.' },
+  maha25: { title:'Mahameruwa Rallycross', kind:'Highlights', cat:'Recap', year:2025, tags:['Rallycross'], eps:[['wejPeVKdwm4','Mahameruwa Rallycross 1.0 2025 Full Highlights','1:38'],['wDG3SxhGz84','Mahameruwa Rallycross 0.1 Trailer','0:52'],['6ZhCYgy7Rm0','Subaru Legacy Highlights','1:37']], desc:'Rallycross in the hills at Mahameruwa.' },
+  malinda: { title:'A Record Breaking Run', kind:'Highlights', cat:'Archives', year:2024, tags:['Record','Circuit'], eps:[['N9QjBaPbLTQ','Malinda Gunasekara, Katukurunda 2024','8:16']], desc:'Malinda Gunasekara sets a record at Katukurunda 2024.' },
+  tuktuk: { title:'Tuk Tuk Rally', kind:'Highlights', cat:'Specials', year:2024, tags:['Rally','Fun'], eps:[['CBBYn4p_YM8','Amazing Rally with Sri Lankan Tuk Tuks','7:37']], desc:"Sri Lanka's favourite three-wheeler goes rallying." },
+  apkc: { title:'Asia Pacific Karting 2024', kind:'Highlights', cat:'Recap', year:2024, tags:['Karting'], eps:[['05vaUg70Z3Q','Asia Pacific Karting Championship 2024','4:51']], desc:'Highlights from the Asia Pacific Karting Championship.' },
+  offroad: { title:'When the Pavement Ends', kind:'Short Film', cat:'Pit Pass Raw', year:2026, tags:['Off-road'], eps:[['kw0DIyjOWW4','When the pavement ends, the real fun begins','1:25']], desc:'Off the tarmac, the real fun begins.' },
+
+  liveMaha23: { title:'Mahameruwa Rallycross 2023', kind:'Race Replay', cat:'Race Live', year:2023, badge:'REPLAY', live:true, tags:['Full broadcast'], eps:[['gm2w4KfjEZQ','First Ever Nippon Paint Mahameruwa Rallycross','7:20:48']], desc:'The complete live broadcast of the first ever Mahameruwa Rallycross.' },
+  liveKatu23: { title:'Katukurunda Circuit Meet 2023', kind:'Race Replay', cat:'Race Live', year:2023, badge:'REPLAY', live:true, tags:['Full broadcast'], eps:[['mqvSMRWfG6M','Nippon Paint SLADA Katukurunda Circuit Meet','8:27:10']], desc:'Eight hours of wheel-to-wheel racing from Katukurunda, start to finish.' },
+  liveCav23: { title:'Cavalry Supercross 2023', kind:'Race Replay', cat:'Race Live', year:2023, badge:'REPLAY', live:true, tags:['Full broadcast'], eps:[['mpQED8bWbuk','Cavalry Supercross 2023','7:04:35']], desc:'The full live broadcast from Cavalry Supercross 2023.' },
+  liveIce22: { title:'Ice Breaker 2022', kind:'Race Replay', cat:'Race Live', year:2022, badge:'REPLAY', live:true, tags:['Full broadcast'], eps:[['HVp5gie2joM','Ice Breaker 2022, Gajaba Race Track','6:37:22']], desc:'Season opener at the Gajaba Race Track.' },
+  liveFox21: { title:'87th Mahagastotte Festival of Speed', kind:'Race Replay', cat:'Race Live', year:2021, badge:'REPLAY', live:true, tags:['Full broadcast'], eps:[['i7TNECnjckI','Day 02 Full Broadcast','2:37:41'],['skyMAqNYVNQ','Day 02 Awards Ceremony','1:43:13']], desc:'SLT Mobitel 87th Mahagastotte Festival of Speed, Nuwara Eliya.' },
+};
+
+const REELS = [
+  ['NA09hrrnMmk','PIT PASS SLO-MO. Every detail, slowed down.'],
+  ['MXSkONudCeI','SLO-MO Series Part 14'],
+  ['fw_UdaRIWrU','Slow motion, full commitment'],
+  ['ZuJSTKVU3uk','SLO-MO Series Part 12'],
+  ['73qDJs6QPyg','Gunner Supercross, Pit Pass RAW'],
+  ['qY_IUUPCTkc','Airtime'],
+  ['2DqUGQCVJ44','SLO-MO Series Part 11'],
+  ['sl0mbwWVdCg','Gunner Supercross RAW'],
+  ['89XEqfyKU1s','SLO-MO Series Part 10'],
+  ['KEtUj4lZbDo','Sideways at speed'],
+];
+
+
+const HERO_KEYS = ['avish','evo','gunner26','pitcast','katu25'];
+const ROWS = [
+  { continue:true },
+  { title:'Top 10 in Sri Lanka Today', top:['avish','powerhouse','evo','gunner26','pitcast','fox','the49','katu25r1','moments','tuktuk'] },
+  { title:'PIT PASS Originals', poster:['evo','fox','moments','pitcast','intl','walawa','pitcare'] },
+  { title:'New on PIT PASS', poster:['avish','gunner26','powerhouse','the49','offroad','f1300'] },
+  { liveBand:true },
+  { title:'Race Highlights', wide:['gunner26','gunner25','katu25r1','walawaHL','maha25','apkc','malinda','tuktuk'] },
+  { title:'PITCAST: Paddock Conversations', eps:'pitcast' },
+  { title:'Full Race Replays', wide:['liveKatu23','liveMaha23','liveCav23','liveIce22','liveFox21'] },
+  { title:'Katukurunda 2025, Every Class', eps:'katu25' },
+  { title:'Pit Care: Know Your Machine', eps:'pitcare' },
+];
+
+/* =====================================================================
+   STATE (per-viewer conveniences only; safe if storage is unavailable)
+   ===================================================================== */
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('pp_'+k); return v ? JSON.parse(v) : d; }catch{ return d; } },
+  set(k, v){ try{ localStorage.setItem('pp_'+k, JSON.stringify(v)); }catch{} },
+};
+let myList = store.get('list', ['evo','pitcast']);
+let progress = store.get('progress', { 'qjMk36ZKy4o':62, 'wYHcougOQxY':35, 'DAGCAWzciM4':80, 'VFjIymbWJT4':18 });
+let current = 'home', seriesCat = 'All';
+
+const $ = (s, el = document) => el.querySelector(s);
+const app = $('#app'), scroller = $('#scroller'), view = $('#view');
+const ICON = {
+  play:'<svg class="icon fill" viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg>',
+  tri:'<svg class="fill" viewBox="0 0 24 24" style="fill:#fff"><path d="M7 4v16l13-8z"/></svg>',
+  plus:'<svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  check:'<svg class="icon" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>',
+  info:'<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
+  dots:'<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>',
+  like:'<svg class="icon" viewBox="0 0 24 24"><path d="M7 10v11H3V10zM7 10l4-8a3 3 0 0 1 3 3v4h6a2 2 0 0 1 2 2.3l-1.3 8A2 2 0 0 1 18.7 21H7"/></svg>',
+  heart:'<svg class="icon" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg>',
+  share:'<svg class="icon" viewBox="0 0 24 24"><path d="M4 12v8h16v-8M12 3v13M7 8l5-5 5 5"/></svg>',
+  dl:'<svg class="icon" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>',
+  x:'<svg class="icon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  bell:'<svg class="icon" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>',
+  bolt:'<svg class="icon" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg>',
+  search:'<svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+};
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const secs = d => { const p = d.split(':').map(Number); return p.length===3 ? p[0]*3600+p[1]*60+p[2] : p[0]*60+p[1]; };
+const totalMins = eps => Math.round(eps.reduce((a,e) => a + secs(e[2]), 0) / 60);
+const fmtLen = s => { const m = totalMins(s.eps); return s.eps.length > 1 ? `${s.eps.length} Episodes` : (m >= 60 ? `${Math.floor(m/60)}h ${m%60}m` : `${Math.max(m,1)}m`); };
+const matchPct = k => 88 + (k.length * 7) % 12;
+const findEp = v => { for (const [k,s] of Object.entries(SHOWS)) { const i = s.eps.findIndex(e => e[0]===v); if (i>-1) return {k,s,i}; } };
+const isOriginal = s => s.badge === 'ORIGINAL' || s.kind === 'Podcast';
+
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('on'), 1900); }
+
+/* =====================================================================
+   CARDS
+   ===================================================================== */
+function poster(k){
+  const s = SHOWS[k];
+  const flag = s.badge==='NEW' ? '<span class="pn">NEW</span>' : s.live ? '<span class="pn">REPLAY</span>' : s.eps.length>1 && s.year>=2025 ? '<span class="pn y">NEW EPISODES</span>' : '';
+  return `<button class="pc" data-show="${k}" aria-label="${esc(s.title)}">${img(s.eps[0][0],'big')}
+    ${isOriginal(s)?'<span class="pm">P</span>':''}${flag}<span class="pt">${esc(s.title)}</span></button>`;
+}
+function top10(k, n){ return `<div class="top10"><b>${n}</b>${poster(k)}</div>`; }
+function wide(k){
+  const s = SHOWS[k], v = s.eps[0][0];
+  return `<button class="wc" data-show="${k}"><div class="th">${img(v)}${s.live?'<span class="bd">REPLAY</span>':''}<span class="dur">${fmtLen(s)}</span></div>
+    <div class="cap"><b>${esc(s.title)}</b><span>${s.kind} · ${s.year}</span></div></button>`;
+}
+function epCard(k, i){
+  const s = SHOWS[k], [v,t,d] = s.eps[i];
+  return `<button class="wc" data-play="${v}"><div class="th">${img(v)}<span class="dur">${d}</span><div class="playc"><i>${ICON.tri}</i></div></div>
+    <div class="cap"><b>${esc(t)}</b><span>${s.eps.length>1?`E${i+1} · `:''}${esc(s.title)}</span></div></button>`;
+}
+function contCard({k,s,i}){
+  const [v] = s.eps[i];
+  return `<div class="cw"><button class="th" data-play="${v}" style="display:block;width:100%">${img(v,'big')}<div class="playc"><i>${ICON.tri}</i></div>
+    <div class="ep">${s.eps.length>1?`E${i+1}`:esc(s.kind)}</div></button>
+    <div class="prog"><i style="width:${progress[v]}%"></i></div>
+    <div class="ft"><button data-show="${k}" aria-label="Details">${ICON.info}</button><button data-act="remove" data-v="${v}" aria-label="Remove from row">${ICON.dots}</button></div></div>`;
+}
+function listItem(k, i){
+  const s = SHOWS[k], [v,t,d] = s.eps[i];
+  return `<button class="li" data-play="${v}"><div class="th">${img(v)}<span class="dur">${d}</span></div>
+    <div style="text-align:left;min-width:0"><b>${esc(t)}</b><small>${esc(s.title)}</small></div><span class="pl">${ICON.tri}</span></button>`;
+}
+function row(title, cards, more){
+  return `<section class="row"><h3>${esc(title)}${more?`<button data-go="${more}">See all</button>`:''}</h3><div class="track">${cards}</div></section>`;
+}
+
+/* =====================================================================
+   PAGES
+   ===================================================================== */
+let heroIdx = 0, heroTimer;
+function heroHTML(){
+  const k = HERO_KEYS[heroIdx], s = SHOWS[k], v = s.eps[0][0], inList = myList.includes(k);
+  return `<div class="bg" style="background-image:${s.hero?`url('${s.hero}'),`:''}${bgs(v)}"></div>
+  <div class="dots">${HERO_KEYS.map((_,i)=>`<i class="${i===heroIdx?'on':''}"></i>`).join('')}</div>
+  <div class="in">
+    <span class="mark"><i>P</i>${isOriginal(s)?'PIT PASS ORIGINAL':s.kind.toUpperCase()}</span>
+    <h2>${esc(s.title)}</h2>
+    <div class="tags">${s.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div>
+    <div class="hbtns"><button class="btn play" data-play="${v}">${ICON.play}Play</button>
+      <button class="btn grey" data-list="${k}">${inList?ICON.check:ICON.plus}My List</button></div>
+  </div>`;
+}
+function setHero(i){
+  heroIdx = (i + HERO_KEYS.length) % HERO_KEYS.length;
+  const h = $('.hero'); if (h) h.innerHTML = heroHTML();
+}
+function startHero(){ clearInterval(heroTimer); heroTimer = setInterval(()=>setHero(heroIdx+1), 8000); }
+
+function pageHome(){
+  const cont = Object.keys(progress).map(findEp).filter(Boolean);
+  let html = `<section class="hero" data-hero></section>`;
+  for (const r of ROWS){
+    if (r.continue){ if (cont.length) html += row('Continue Watching',cont.map(contCard).join('')); }
+    else if (r.liveBand) html += liveBand();
+    else if (r.top) html += row(r.title, r.top.map((k,i)=>top10(k,i+1)).join(''));
+    else if (r.poster) html += row(r.title, r.poster.map(poster).join(''), 'series');
+    else if (r.wide) html += row(r.title, r.wide.map(wide).join(''));
+    else if (r.eps) html += row(r.title, SHOWS[r.eps].eps.map((_,i)=>epCard(r.eps,i)).join(''));
+  }
+  view.innerHTML = html + `<p class="foot-note">Prototype for pitch purposes. Not an official PIT PASS app.<br>Videos from youtube.com/@pitpasssrilanka.</p>`;
+  setHero(heroIdx); startHero(); tickCountdown();
+}
+
+function liveBand(){
+  return `<section class="liveband"><div class="bg" style="background-image:url('${SITE}34-924x616.jpg')"></div>
+    <div class="in"><span class="livedot">NEXT LIVE EVENT</span>
+      <h4>Rotherham Katukurunda Circuit Meet 2026</h4>
+      <p>Every race streamed live with on-board cams and paddock interviews.</p>
+      <div class="count" data-countdown></div>
+      <div class="hbtns"><button class="btn play" data-act="remind">${ICON.bell}Remind Me</button><button class="btn grey" data-go="live">Replays</button></div>
+    </div></section>`;
+}
+let cdTimer;
+const cdTarget = Date.now() + ((((12*24)+7)*60+42)*60*1000); // demo date, about 12 days out
+function tickCountdown(){
+  clearInterval(cdTimer);
+  const draw = () => {
+    const els = document.querySelectorAll('[data-countdown]'); if (!els.length) return clearInterval(cdTimer);
+    let s = Math.max(0, (cdTarget - Date.now())/1000|0);
+    const d = s/86400|0; s%=86400; const h = s/3600|0; s%=3600; const m = s/60|0; s%=60;
+    const html = [[d,'DAYS'],[h,'HRS'],[m,'MIN'],[s,'SEC']].map(([n,l])=>`<div><b>${String(n).padStart(2,'0')}</b><span>${l}</span></div>`).join('');
+    els.forEach(el => el.innerHTML = html);
+  };
+  draw(); cdTimer = setInterval(draw, 1000);
+}
+
+function pageSeries(){
+  const keys = Object.keys(SHOWS).filter(k => !SHOWS[k].live && (seriesCat==='All' || SHOWS[k].cat===seriesCat));
+  view.innerHTML = `<div class="page"><div class="ph"><h2>${seriesCat==='All'?'Series & Specials':esc(seriesCat)}</h2><p>Originals, highlights and behind-the-scenes stories from Sri Lankan motorsport.</p></div>
+    <div class="pgrid">${keys.map(poster).join('')}</div></div>`;
+}
+function pageLive(){
+  const replays = Object.keys(SHOWS).filter(k=>SHOWS[k].live);
+  view.innerHTML = `<div class="page"><div class="ph"><h2>Live</h2><p>Watch race days live, or relive full broadcasts from the archive.</p></div>`
+    + liveBand()
+    + row('Full Race Broadcasts', replays.map(wide).join(''))
+    + row('Katukurunda 2025, Every Class', SHOWS.katu25.eps.map((_,i)=>epCard('katu25',i)).join(''))
+    + `</div>`;
+  tickCountdown();
+}
+function pagePodcasts(){
+  const s = SHOWS.pitcast;
+  view.innerHTML = `<div class="page"><div class="ph"><h2>PITCAST</h2><p>${esc(s.desc)}</p></div>
+    <div class="list">${s.eps.map((_,i)=>listItem('pitcast',i)).join('')}</div></div>`;
+}
+function pageSearch(){
+  view.innerHTML = `<div class="sfield"><label>${ICON.search}<input id="q" type="search" placeholder="Search drivers, races, series" autocomplete="off"></label></div>
+    <div class="page bare" id="results"></div>`;
+  const q = $('#q');
+  const draw = () => {
+    const t = q.value.trim().toLowerCase(), out = $('#results');
+    if (!t){
+      const picks = [['evo',0],['avish',0],['pitcast',1],['fox',0],['gunner26',0],['katu25',1],['intl',0],['walawa',0],['moments',0],['tuktuk',0]];
+      out.innerHTML = `<div class="sec-title">Top Searches</div><div class="list">${picks.map(([k,i])=>listItem(k,i)).join('')}</div>`;
+      return;
+    }
+    const hits = [];
+    for (const [k,s] of Object.entries(SHOWS)){
+      const showHit = (s.title+' '+s.desc+' '+s.cat+' '+s.tags.join(' ')).toLowerCase().includes(t);
+      s.eps.forEach(([,title],i)=>{ if (showHit ? i===0 : title.toLowerCase().includes(t)) hits.push([k,i]); });
+    }
+    out.innerHTML = hits.length ? `<div class="sec-title">${hits.length} results</div><div class="list">${hits.map(([k,i])=>listItem(k,i)).join('')}</div>`
+      : `<div class="empty">No matches for “${esc(q.value)}”.<br>Try Ashan, Supercross or Katukurunda.</div>`;
+  };
+  q.addEventListener('input', draw); draw();
+  setTimeout(()=>q.focus({preventScroll:true}), 50);
+}
+function pageMyPass(){
+  const saved = myList.filter(k=>SHOWS[k]);
+  view.innerHTML = `<div class="page bare">
+    <div class="mp-head"><span class="av" style="background:var(--accent)"><svg class="icon" viewBox="0 0 24 24" style="width:36px;height:36px"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><b>My Account</b></div>
+    <button class="tile up" data-act="plans" style="width:calc(100% - 32px);text-align:left"><span class="ic">${ICON.bolt}</span><div><b>You're on Paddock (Free)</b><span>Upgrade to Pit Lane for ad-free originals and live races.</span></div></button>
+    <div class="tile"><span class="ic">${ICON.bell}</span><div><b>Katukurunda Circuit Meet 2026</b><span>Goes live soon. Tap Remind Me on the Live tab.</span></div></div>
+    <div class="tile"><span class="ic">${ICON.dl}</span><div><b>Downloads</b><span>2 episodes saved for offline viewing</span></div></div>
+    ${saved.length ? row('My List', saved.map(poster).join('')) : `<div class="sec-title">My List</div><div class="empty" style="padding-top:4px">Tap My List on any title to save it here.</div>`}
+    <div class="sec-title" id="plans">Choose your PIT PASS</div>
+    <div class="plans">
+      <div class="plan"><div class="hd"><h4>Paddock</h4><span class="price">Free</span></div>
+        <ul><li>Highlights and Reels</li><li>Selected PITCAST episodes</li><li>Ad-supported</li></ul></div>
+      <div class="plan best"><span class="flag">MOST POPULAR</span><div class="hd"><h4>Pit Lane</h4><span class="price">LKR 490<small> / mo</small></span></div>
+        <ul><li>Every Original series, ad-free</li><li>Full race replays archive</li><li>Live events in HD</li><li>Downloads for offline viewing</li></ul>
+        <button class="btn play block" data-act="subscribe" data-plan="Pit Lane">Start 7-day free trial</button></div>
+      <div class="plan"><div class="hd"><h4>Grid Pass</h4><span class="price">LKR 990<small> / mo</small></span></div>
+        <ul><li>Everything in Pit Lane</li><li>On-board and multi-cam streams</li><li>4 screens and Smart TV</li></ul>
+        <button class="btn grey block" data-act="subscribe" data-plan="Grid Pass">Choose Grid Pass</button></div>
+    </div>
+    <p class="note">Prototype for pitch purposes, not an official PIT PASS app. Plan names and pricing are placeholders.</p></div>`;
+}
+
+/* Reels: full-height vertical feed */
+let reelIO;
+function pageReels(){
+  view.innerHTML = '';
+  const layer = document.createElement('div');
+  layer.id = 'reels'; layer.className = 'layer';
+  layer.innerHTML = REELS.map(([v,t],i)=>`<div class="reel" data-reel="${v}">${img(v,'big')}
+    <button class="tap" aria-label="Play"><i>${ICON.tri}</i></button>
+    <div class="rcap"><b><img src="${BADGE_LOGO}" alt="">pitpasssrilanka<span>Follow</span></b>${esc(t)}</div>
+    <div class="ract"><button data-act="heart">${ICON.heart}${(i*137+412)%900+100}</button><button data-act="share">${ICON.share}Share</button></div></div>`).join('');
+  app.insertBefore(layer, $('#tabbar'));
+  app.insertAdjacentHTML('beforeend', '<div class="reels-top" id="reelsTop">Reels</div>');
+  reelIO = new IntersectionObserver(es => es.forEach(e => {
+    const f = $('iframe', e.target);
+    if (e.isIntersecting && e.intersectionRatio > .6){ if (!f) playReel(e.target); }
+    else if (f) f.remove();
+  }), { root: layer, threshold: [0, .6, 1] });
+  layer.querySelectorAll('.reel').forEach(r => reelIO.observe(r));
+}
+function playReel(r){
+  if ($('iframe', r)) return;
+  const v = r.dataset.reel;
+  r.querySelector('img').insertAdjacentHTML('afterend', `<iframe src="https://www.youtube.com/embed/${v}?autoplay=1&mute=1&loop=1&playlist=${v}&controls=0&playsinline=1&rel=0&modestbranding=1" allow="autoplay; encrypted-media"></iframe>`);
+}
+function closeReels(){ reelIO?.disconnect(); $('#reels')?.remove(); $('#reelsTop')?.remove(); }
+
+/* =====================================================================
+   DETAIL SHEET (doubles as the player)
+   ===================================================================== */
+function openShow(k, playV){
+  $('#detail')?.remove();
+  const s = SHOWS[k], inList = myList.includes(k);
+  const v = playV || s.eps[0][0];
+  const el = document.createElement('div');
+  el.id = 'detail'; el.className = 'layer'; el.dataset.k = k;
+  const rank = ROWS[1].top.indexOf(k);
+  el.innerHTML = `<div class="media" id="media"></div>
+    <div class="dbody">
+      <span class="mark"><i>P</i>${isOriginal(s)?'PIT PASS ORIGINAL':s.kind.toUpperCase()}</span>
+      <h2>${esc(s.title)}</h2>
+      <div class="meta"><span class="match">${matchPct(k)}% Match</span><span>${s.year}</span><span class="box">PG</span><span>${fmtLen(s)}</span><span class="box">HD</span></div>
+      ${rank>-1?`<div class="meta"><span class="top"><i>TOP<br>10</i>#${rank+1} in Sri Lanka Today</span></div>`:''}
+      <div id="dplay"></div>
+      <button class="btn grey block" data-act="download">${ICON.dl}Download</button>
+      <p>${esc(s.desc)}</p>
+      <div class="cred">Collection: <b>${esc(s.cat)}</b><br>Language: <b>Sinhala, English</b></div>
+      <div class="acts"><button data-list="${k}" class="${inList?'on':''}">${inList?ICON.check:ICON.plus}My List</button>
+        <button data-act="rate">${ICON.like}Rate</button><button data-act="share">${ICON.share}Share</button></div>
+    </div>
+    <div class="dtabs"><button class="on" data-tab="eps">${s.eps.length>1?'Episodes':'Trailers & More'}</button><button data-tab="more">More Like This</button></div>
+    <div id="dtab"></div>`;
+  app.insertBefore(el, $('#toast'));
+  el.addEventListener('click', e => {
+    const tab = e.target.closest('[data-tab]'); if (!tab) return;
+    el.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('on', b===tab));
+    drawTab(k, tab.dataset.tab);
+  });
+  drawTab(k, 'eps');
+  setMedia(v, !!playV);
+}
+function drawTab(k, tab){
+  const s = SHOWS[k], box = $('#dtab'), cur = $('#detail')?.dataset.v;
+  if (tab === 'more'){
+    const like = Object.keys(SHOWS).filter(x => x!==k && (SHOWS[x].cat===s.cat || SHOWS[x].kind===s.kind)).slice(0,9);
+    const fill = Object.keys(SHOWS).filter(x => x!==k && !like.includes(x)).slice(0, 9-like.length);
+    box.innerHTML = `<div class="pgrid" style="padding-top:8px">${[...like,...fill].map(poster).join('')}</div>`;
+    return;
+  }
+  box.innerHTML = `<div class="eps">${s.eps.map(([v,t,d],i)=>`<div class="epi ${v===cur?'cur':''}">
+    <div class="r"><button class="th" data-play="${v}">${img(v)}<span class="pl"><i>${ICON.tri}</i></span>${progress[v]?`<div class="prog"><i style="width:${progress[v]}%"></i></div>`:''}</button>
+      <div><b>${s.eps.length>1?`${i+1}. `:''}${esc(t)}</b><small>${d}</small></div>
+      <button class="dl" data-act="download" aria-label="Download">${ICON.dl}</button></div></div>`).join('')}</div>`;
+}
+// Show an episode in the sheet's media area; autoplay=true starts it inline.
+function setMedia(v, autoplay){
+  const d = $('#detail'); if (!d) return;
+  const {s,i} = findEp(v);
+  d.dataset.v = v;
+  const m = $('#media');
+  m.style.backgroundImage = bgs(v);
+  const close = `<button class="xb" data-act="close" aria-label="Close">${ICON.x}</button>`;
+  if (autoplay){
+    m.innerHTML = close + `<iframe src="https://www.youtube.com/embed/${v}?autoplay=1&rel=0&modestbranding=1&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+    progress[v] = Math.max(progress[v]||0, 5); store.set('progress', progress);
+  } else {
+    m.innerHTML = close + `<button class="big" data-play="${v}" aria-label="Play"><i>${ICON.tri}</i></button>`;
+  }
+  const label = `${progress[v]?'Resume':'Play'}${s.eps.length>1?` E${i+1}`:''}`;
+  $('#dplay').innerHTML = `<button class="btn play block" data-play="${v}">${ICON.play}${label}</button>`;
+  d.querySelectorAll('.epi').forEach(e => e.classList.toggle('cur', !!e.querySelector(`[data-play="${v}"]`)));
+  if (autoplay) d.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function play(v){
+  const f = findEp(v); if (!f) return;
+  if ($('#detail')?.dataset.k === f.k) setMedia(v, true);
+  else openShow(f.k, v);
+}
+function closeDetail(){ if (!$('#detail')) return; $('#detail').remove(); if (current==='home') pageHome(); }
+
+/* Categories sheet */
+function openCats(){
+  const cats = ['All', ...new Set(Object.values(SHOWS).filter(s=>!s.live).map(s=>s.cat))];
+  const el = document.createElement('div');
+  el.id = 'cats'; el.className = 'layer';
+  el.innerHTML = cats.map(c=>`<button data-cat="${esc(c)}" class="${c===seriesCat?'on':''}">${c==='All'?'All Categories':esc(c)}</button>`).join('')
+    + `<button class="xc" data-act="closecats" aria-label="Close">${ICON.x}</button>`;
+  app.insertBefore(el, $('#toast'));
+}
+
+/* =====================================================================
+   ROUTING + EVENTS
+   ===================================================================== */
+const PAGES = { home:pageHome, series:pageSeries, live:pageLive, podcasts:pagePodcasts, search:pageSearch, mypass:pageMyPass, reels:pageReels };
+function go(p){
+  if (!PAGES[p]) return;
+  current = p;
+  $('#detail')?.remove(); $('#cats')?.remove(); closeReels();
+  clearInterval(heroTimer);
+  document.querySelectorAll('#tabbar [data-go], #chips [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === p));
+  const hdr = $('#hdr');
+  hdr.classList.toggle('hide', p === 'reels' || p === 'search');
+  $('#chips').classList.toggle('hide', p === 'mypass');
+  $('#chips .x').classList.toggle('hide', !['series','live','podcasts'].includes(p));
+  scroller.scrollTop = 0;
+  PAGES[p]();
+  onScroll();
+}
+
+app.addEventListener('click', e => {
+  const t = e.target.closest('[data-play],[data-show],[data-go],[data-list],[data-act],[data-cat],.reel .tap');
+  if (!t || t.tagName === 'A') return;
+  const d = t.dataset;
+  if (t.matches('.reel .tap')){ playReel(t.closest('.reel')); return; }
+  if (d.play){ play(d.play); return; }
+  if (d.show){ openShow(d.show); return; }
+  if (d.go){ go(d.go); return; }
+  if (d.cat){ seriesCat = d.cat; $('#cats')?.remove(); go('series'); return; }
+  if (d.list){
+    const k = d.list, i = myList.indexOf(k);
+    if (i > -1) myList.splice(i,1); else myList.push(k);
+    store.set('list', myList);
+    const on = myList.includes(k);
+    document.querySelectorAll(`[data-list="${k}"]`).forEach(b => { b.classList.toggle('on', on); b.querySelector('svg').outerHTML = on ? ICON.check : ICON.plus; });
+    toast(on ? 'Added to My List' : 'Removed from My List');
+    return;
+  }
+  switch (d.act){
+    case 'close': closeDetail(); break;
+    case 'cats': openCats(); break;
+    case 'closecats': $('#cats')?.remove(); break;
+    case 'remind': toast("Reminder set. We'll notify you before lights out."); break;
+    case 'subscribe': toast(`${d.plan} trial started (demo)`); break;
+    case 'plans': $('#plans')?.scrollIntoView({ behavior:'smooth' }); break;
+    case 'download': toast('Downloading for offline viewing (demo)'); break;
+    case 'rate': t.classList.toggle('on'); toast(t.classList.contains('on') ? 'Thanks for rating' : 'Rating removed'); break;
+    case 'heart': t.classList.toggle('on'); break;
+    case 'share': toast('Share link copied (demo)'); break;
+    case 'cast': toast('Looking for TVs nearby (demo)'); break;
+    case 'remove': delete progress[d.v]; store.set('progress', progress); pageHome(); toast('Removed from Continue Watching'); break;
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape'){ if ($('#cats')) $('#cats').remove(); else closeDetail(); } });
+
+function onScroll(){ $('#hdr').classList.toggle('solid', scroller.scrollTop > 30 || current !== 'home'); }
+scroller.addEventListener('scroll', onScroll, { passive:true });
+
+/* Swipe the hero card */
+let sx = null;
+scroller.addEventListener('touchstart', e => { sx = e.target.closest('[data-hero]') ? e.touches[0].clientX : null; }, { passive:true });
+scroller.addEventListener('touchend', e => {
+  if (sx === null) return;
+  const dx = e.changedTouches[0].clientX - sx;
+  if (Math.abs(dx) > 40){ setHero(heroIdx + (dx < 0 ? 1 : -1)); startHero(); }
+  sx = null;
+});
+
+/* Boot */
+document.querySelectorAll('[data-logo]').forEach(i => i.src = LOGO);
+$('#meBtn').style.background = 'var(--accent)';
+go('home');
+setTimeout(() => {
+  $('#splash').style.opacity = 0;
+  setTimeout(() => $('#splash').remove(), 500);
+}, 1500);
+</script>
+</body>
+</html>
